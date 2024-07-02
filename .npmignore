@@ -1,0 +1,13 @@
+.*
+*.json
+jest.config.js
+*/**/__tests__
+demo
+coverage
+src
+test
+bun.lockb
+docs
+CHANGELOG.md
+README.md
+LICENSE
