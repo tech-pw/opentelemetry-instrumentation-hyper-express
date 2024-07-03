@@ -21,6 +21,8 @@ npm install --save @pw-tech/opentelemetry-instrumentation-hyper-express
 
 ## Usage
 
+### With opentelemetry
+
 ```js
 const { HyperExpressInstrumentation } = require('@pw-tech/opentelemetry-instrumentation-hyper-express');
 const { ConsoleSpanExporter, SimpleSpanProcessor } = require('@opentelemetry/sdk-trace-base');
@@ -37,6 +39,27 @@ registerInstrumentations({
     new HyperExpressInstrumentation()
   ],
 });
+
+```
+
+### With Datadog (dd-trace)
+```js
+let service = "your-service";
+
+const tracer = require('dd-trace').init({
+  service,
+})
+const { TracerProvider } = tracer;
+const provider = new TracerProvider();
+provider.register();
+
+import HyperExpressInstrumentation from "@pw-tech/instrumentation-hyper-express";
+const {
+  getNodeAutoInstrumentations
+} = require('@opentelemetry/auto-instrumentations-node');
+
+new HyperExpressInstrumentation();
+
 
 ```
 
