@@ -12,7 +12,7 @@ Compatible with OpenTelemetry JS API and SDK `1.0+`.
 ## Installation
 
 ```bash
-npm install --save @pw-tech/opentelemetry-instrumentation-hyper-express
+npm install --save @pw-tech/instrumentation-hyper-express
 ```
 
 ### Supported Versions
@@ -24,7 +24,7 @@ npm install --save @pw-tech/opentelemetry-instrumentation-hyper-express
 ### With opentelemetry
 
 ```js
-const { HyperExpressInstrumentation } = require('@pw-tech/opentelemetry-instrumentation-hyper-express');
+const { HyperExpressInstrumentation } = require('@pw-tech/instrumentation-hyper-express');
 const { ConsoleSpanExporter, SimpleSpanProcessor } = require('@opentelemetry/sdk-trace-base');
 const { NodeTracerProvider } = require('@opentelemetry/sdk-trace-node');
 const { registerInstrumentations } = require('@opentelemetry/instrumentation');
