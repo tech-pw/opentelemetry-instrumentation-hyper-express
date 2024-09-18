@@ -183,7 +183,7 @@ export class HyperExpressInstrumentation extends InstrumentationBase {
           metadata.type === LayerType.REQUEST
             ? `${reqRoute.method} ${route}`
             : `middleware - ${fnName || 'anonymous'}`;
-        const spanName = metadata.type === LayerType.REQUEST ? SpanName.REQUEST : SpanName.MIDDLEWARE;
+        const spanName = metadata.type === LayerType.REQUEST ? resource : SpanName.MIDDLEWARE;
         let attributes: any = {
           [AttributeNames.NAME]: fnName,
           [AttributeNames.VERSION]: this._moduleVersion || 'n/a',
