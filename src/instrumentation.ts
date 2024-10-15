@@ -30,12 +30,13 @@ import {
   isWrapped,
   safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
-import { SEMATTRS_HTTP_HOST, SEMATTRS_HTTP_METHOD, SEMATTRS_HTTP_ROUTE, SEMATTRS_HTTP_STATUS_CODE, SEMATTRS_HTTP_TARGET, SEMATTRS_HTTP_URL, SEMATTRS_HTTP_USER_AGENT } from '@opentelemetry/semantic-conventions';
+import { SEMATTRS_HTTP_CLIENT_IP, SEMATTRS_HTTP_HOST, SEMATTRS_HTTP_METHOD, SEMATTRS_HTTP_ROUTE, SEMATTRS_HTTP_STATUS_CODE, SEMATTRS_HTTP_TARGET, SEMATTRS_HTTP_URL, SEMATTRS_HTTP_USER_AGENT } from '@opentelemetry/semantic-conventions';
 import { isPromise, isAsyncFunction, parseResponseStatus, getScheme } from './utils';
 import { getRPCMetadata, RPCType } from '@opentelemetry/core';
 import type { HyperExpressInstrumentationConfig } from './types';
 import { SpanKind } from '@opentelemetry/api';
 
+const APM_TYPE = process.env.APM_TYPE;
 
 export class HyperExpressInstrumentation extends InstrumentationBase {
   constructor(config: HyperExpressInstrumentationConfig = {}) {
@@ -183,7 +184,15 @@ export class HyperExpressInstrumentation extends InstrumentationBase {
           metadata.type === LayerType.REQUEST
             ? `${reqRoute.method} ${route}`
             : `middleware - ${fnName || 'anonymous'}`;
-        const spanName = metadata.type === LayerType.REQUEST ? SpanName.REQUEST : SpanName.MIDDLEWARE;
+        let spanName = '';
+        switch (APM_TYPE) {
+          case 'DD':
+            spanName = metadata.type === LayerType.REQUEST ? SpanName.REQUEST : SpanName.MIDDLEWARE;
+            break;
+          case 'ELASTIC':
+            spanName = resource;
+            break;
+        }
         let attributes: any = {
           [AttributeNames.NAME]: fnName,
           [AttributeNames.VERSION]: this._moduleVersion || 'n/a',
@@ -202,6 +211,7 @@ export class HyperExpressInstrumentation extends InstrumentationBase {
           attributes[SEMATTRS_HTTP_USER_AGENT] = req.headers['user-agent'];
           attributes[SEMATTRS_HTTP_TARGET] = route;
           attributes[SEMATTRS_HTTP_URL] = getScheme(req.app) + req.headers.host + req.url; 
+          attributes[SEMATTRS_HTTP_CLIENT_IP] = req.ip;
         }
         const span = this.tracer.startSpan(
           spanName,
