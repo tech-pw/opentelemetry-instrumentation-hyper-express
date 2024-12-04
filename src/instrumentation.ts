@@ -20,7 +20,7 @@ import type { Response, MiddlewareNext, MiddlewareHandler } from 'hyper-express'
 import * as api from '@opentelemetry/api';
 import type { Server } from 'hyper-express';
 import { LayerType } from './types';
-import { AttributeNames, LIBRARY_NAME, SpanName, SpanTags, SpanKind as SpanKindAttr } from './enums/AttributeNames';
+import { SpanName } from './enums/AttributeNames';
 // import { VERSION } from './version';
 import * as constants from './constants';
 import {
@@ -30,9 +30,9 @@ import {
   isWrapped,
   safeExecuteInTheMiddle,
 } from '@opentelemetry/instrumentation';
-import { SEMATTRS_HTTP_CLIENT_IP, SEMATTRS_HTTP_HOST, SEMATTRS_HTTP_METHOD, SEMATTRS_HTTP_ROUTE, SEMATTRS_HTTP_STATUS_CODE, SEMATTRS_HTTP_TARGET, SEMATTRS_HTTP_URL, SEMATTRS_HTTP_USER_AGENT } from '@opentelemetry/semantic-conventions';
+import { SEMATTRS_HTTP_HOST, SEMATTRS_HTTP_METHOD, SEMATTRS_HTTP_ROUTE, SEMATTRS_HTTP_STATUS_CODE, SEMATTRS_HTTP_TARGET, SEMATTRS_HTTP_URL, SEMATTRS_HTTP_USER_AGENT } from '@opentelemetry/semantic-conventions';
 import { isPromise, isAsyncFunction, parseResponseStatus, getScheme } from './utils';
-import { getRPCMetadata, RPCType } from '@opentelemetry/core';
+// import { getRPCMetadata, RPCType } from '@opentelemetry/core';
 import type { HyperExpressInstrumentationConfig } from './types';
 import { SpanKind } from '@opentelemetry/api';
 
@@ -47,6 +47,7 @@ export class HyperExpressInstrumentation extends InstrumentationBase {
     );
   }
 
+  //@ts-ignore
   private _moduleVersion?: string;
   private _isDisabled = false;
 
@@ -161,7 +162,9 @@ export class HyperExpressInstrumentation extends InstrumentationBase {
         res: Response,
         next: MiddlewareNext
       ) => {
-        if (this._isDisabled) {
+        const fnName = handler.name || undefined;
+        const isAnnoymousMiddleware = !fnName && metadata.type !== LayerType.REQUEST
+        if (isAnnoymousMiddleware || this._isDisabled) {
           return handler(req, res, next);
         }
         // const route =
@@ -174,12 +177,11 @@ export class HyperExpressInstrumentation extends InstrumentationBase {
         const route = reqRoute.pattern;
         // console.log("yello", req, req.app);
         // replace HTTP instrumentations name with one that contains a route
-        const httpMetadata = getRPCMetadata(api.context.active());
-        if (httpMetadata?.type === RPCType.HTTP) {
-          httpMetadata.route = route;
-        }
+        // const httpMetadata = getRPCMetadata(api.context.active());
+        // if (httpMetadata?.type === RPCType.HTTP) {
+        //   httpMetadata.route = route;
+        // }
 
-        const fnName = handler.name || undefined;
         const resource =
           metadata.type === LayerType.REQUEST
             ? `${reqRoute.method} ${route}`
@@ -193,25 +195,19 @@ export class HyperExpressInstrumentation extends InstrumentationBase {
             spanName = resource;
             break;
         }
-        let attributes: any = {
-          [AttributeNames.NAME]: fnName,
-          [AttributeNames.VERSION]: this._moduleVersion || 'n/a',
-          [AttributeNames.TYPE]: metadata.type,
-          [AttributeNames.METHOD]: reqRoute.method,
-          [SpanTags.COMPONENT]: LIBRARY_NAME,
-          [SpanTags.KIND]: SpanKindAttr.SERVER,
-          [SpanTags.RESOURCE]: resource,
-        };
+        let attributes: any = {};
 
         if (metadata.type === LayerType.REQUEST) {
           //@ts-ignore
-          attributes[SEMATTRS_HTTP_ROUTE] =  route,
-          attributes[SEMATTRS_HTTP_HOST] = req.headers.host; 
-          attributes[SEMATTRS_HTTP_METHOD] = reqRoute.method;
-          attributes[SEMATTRS_HTTP_USER_AGENT] = req.headers['user-agent'];
-          attributes[SEMATTRS_HTTP_TARGET] = route;
-          attributes[SEMATTRS_HTTP_URL] = getScheme(req.app) + req.headers.host + req.url; 
-          attributes[SEMATTRS_HTTP_CLIENT_IP] = req.ip;
+          Object.assign(attributes, {
+            [SEMATTRS_HTTP_ROUTE]: route,
+            [SEMATTRS_HTTP_HOST]: req.headers.host,
+            [SEMATTRS_HTTP_METHOD]: reqRoute.method,
+            [SEMATTRS_HTTP_USER_AGENT]: req.headers['user-agent'],
+            [SEMATTRS_HTTP_TARGET]: route,
+            [SEMATTRS_HTTP_URL]: `${getScheme(req.app)}${req.headers.host}${req.url}`,
+            // [SEMATTRS_HTTP_CLIENT_IP]: req.ip,
+          });
         }
         const span = this.tracer.startSpan(
           spanName,

@@ -1,10 +1,10 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { ConsoleSpanExporter } from '@opentelemetry/sdk-trace-node';
 // import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import {
-  PeriodicExportingMetricReader,
-  ConsoleMetricExporter,
-} from '@opentelemetry/sdk-metrics';
+// import {
+//   PeriodicExportingMetricReader,
+//   ConsoleMetricExporter,
+// } from '@opentelemetry/sdk-metrics';
 import { HyperExpressInstrumentation } from './instrumentation';
 import { ZipkinExporter } from '@opentelemetry/exporter-zipkin';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
@@ -31,9 +31,9 @@ const Exporter = ((exporterParam: string) => {
 const sdk = new NodeSDK({
   serviceName: "my-service",
   traceExporter: new Exporter(),
-  metricReader: new PeriodicExportingMetricReader({
-    exporter: new ConsoleMetricExporter(),
-  }),
+  // metricReader: new PeriodicExportingMetricReader({
+  //   exporter: new ConsoleMetricExporter(),
+  // }),
   instrumentations: [new HyperExpressInstrumentation()],
 });
 
