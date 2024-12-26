@@ -1,6 +1,6 @@
 {
   "name": "@pw-tech/instrumentation-hyper-express",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "tag": "latest",
   "description": "OpenTelemetry hyper-express automatic instrumentation package",
   "main": "build/src/index.js",
