@@ -36,7 +36,7 @@ import { isPromise, isAsyncFunction, parseResponseStatus, getScheme } from './ut
 import type { HyperExpressInstrumentationConfig } from './types';
 import { SpanKind } from '@opentelemetry/api';
 
-const APM_TYPE = process.env.APM_TYPE;
+const APM_TYPE = process.env.APM_TYPE || "ELASTIC";
 
 export class HyperExpressInstrumentation extends InstrumentationBase {
   constructor(config: HyperExpressInstrumentationConfig = {}) {
@@ -77,7 +77,6 @@ export class HyperExpressInstrumentation extends InstrumentationBase {
           this._isDisabled = false;
           const Server: any = moduleExports;
           for (const name of constants.HYPER_EXPRESS_METHODS) {
-            // console.log("name", name);
             if (isWrapped(Server.prototype[name])) {
               this._unwrap(Server.prototype, name);
             }
@@ -173,9 +172,7 @@ export class HyperExpressInstrumentation extends InstrumentationBase {
         //     : req.route?.path;
         //@ts-ignore
         const reqRoute = req.route;
-        // console.log("req.route", reqRoute);
         const route = reqRoute.pattern;
-        // console.log("yello", req, req.app);
         // replace HTTP instrumentations name with one that contains a route
         // const httpMetadata = getRPCMetadata(api.context.active());
         // if (httpMetadata?.type === RPCType.HTTP) {
@@ -246,9 +243,13 @@ export class HyperExpressInstrumentation extends InstrumentationBase {
         const wrapPromise = (promise: Promise<unknown>) => {
           return promise
             .then(value => {
-              // console.log("wrapPromise", res.statusCode, metadata.type);
+              //@ts-ignore
+              if (span?._span?._agent?.currentTransaction?._result && res.statusCode && APM_TYPE === 'ELASTIC') {
+                const statusCodeStartNumber = res.statusCode.toString().charAt(0);
+                //@ts-ignore
+                span._span._agent.currentTransaction._result = `HTTP ${statusCodeStartNumber}xx`;
+              }
               if (metadata.type === LayerType.REQUEST) {
-                // console.log("wrapPromise", res.statusCode, metadata.type);
                 // span.setAttribute(SEMATTRS_HTTP_STATUS_CODE, res.statusCode);
                 span.setAttributes({
                   [SEMATTRS_HTTP_STATUS_CODE]: res.statusCode,
@@ -269,7 +270,6 @@ export class HyperExpressInstrumentation extends InstrumentationBase {
             });
         };
 
-        // console.log("lol", api.context.active(), span);
         const newContext = api.trace.setSpan(api.context.active(), span);
         return api.context.with(
           newContext,
