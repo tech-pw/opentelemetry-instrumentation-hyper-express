@@ -246,6 +246,10 @@ export class HyperExpressInstrumentation extends InstrumentationBase {
         const wrapPromise = (promise: Promise<unknown>) => {
           return promise
             .then(value => {
+              if (span._span && span._span._agent && span._span._agent.currentTransaction && span._span._agent.currentTransaction._result && res.statusCode) {
+                const statusCodeStartNumber = res.statusCode.toString().charAt(0);
+                span._span._agent.currentTransaction._result = `HTTP ${statusCodeStartNumber}xx`;
+              }
               // console.log("wrapPromise", res.statusCode, metadata.type);
               if (metadata.type === LayerType.REQUEST) {
                 // console.log("wrapPromise", res.statusCode, metadata.type);
