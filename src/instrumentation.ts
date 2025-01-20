@@ -121,7 +121,7 @@ export class HyperExpressInstrumentation extends InstrumentationBase {
     return function (this: Server, ...handler: types.NestedRequestHandlers) {
       return original.call(
         this,
-        instrumentation._handlerPatcher(
+        ...instrumentation._handlerPatcher(
           { type: LayerType.MIDDLEWARE, methodName },
           handler
         )
