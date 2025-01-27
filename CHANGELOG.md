@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.3.0-beta.1]
+## [1.3.1]
 
     * Fix middleware arguments formatting
 
