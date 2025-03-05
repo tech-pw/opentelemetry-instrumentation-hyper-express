@@ -9,6 +9,7 @@
   "scripts": {
     "clean": "rimraf build/*",
     "compile": "tsc -p .",
+    "build": "npm run clean && npm run compile",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "prepublishOnly": "npm run compile",
