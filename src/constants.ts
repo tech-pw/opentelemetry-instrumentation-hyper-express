@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export const HYPER_EXPRESS_MW_METHODS = ['use', 'pre'];
+export const HYPER_EXPRESS_MW_METHODS = ['use'];
 export const HYPER_EXPRESS_METHODS = [
   'delete',
   'get',
@@ -22,6 +22,7 @@ export const HYPER_EXPRESS_METHODS = [
   'post',
   'put',
   'patch',
+  'all',
 ];
 export const MODULE_NAME = 'hyper-express';
 export const SUPPORTED_VERSIONS = ['>=4.0.0 <12'];

@@ -1,5 +1,8 @@
 # Changelog
 
+## [2.0.0-beta-1]
+    * Added instrumentation support for Router class
+
 ## [1.3.1]
 
     * Fix middleware arguments formatting
