@@ -18,7 +18,7 @@ import type * as types from './internal-types';
 import type { Response, MiddlewareNext, MiddlewareHandler } from 'hyper-express';
 
 import * as api from '@opentelemetry/api';
-import type { Server } from 'hyper-express';
+import type { Server, Router } from 'hyper-express';
 import { LayerType } from './types';
 import { SpanName } from './enums/AttributeNames';
 // import { VERSION } from './version';
@@ -71,21 +71,51 @@ export class HyperExpressInstrumentation extends InstrumentationBase {
 
     module.files.push(
       new InstrumentationNodeModuleFile(
+        'hyper-express/src/components/router/Router.js',
+        constants.SUPPORTED_VERSIONS,
+        moduleExports => {
+          const Router: any = moduleExports;
+          // Wrap router methods (assuming HYPER_EXPRESS_METHODS covers route methods)
+          for (const name of constants.HYPER_EXPRESS_METHODS) {
+            if (isWrapped(Router.prototype[name])) {
+              this._unwrap(Router.prototype, name);
+            }
+            this._wrap(
+              Router.prototype,
+              name as keyof Router,
+              this._methodPatcher.bind(this)
+            );
+          }
+          return moduleExports;
+        },
+        moduleExports => {
+          if (moduleExports) {
+            const Router: any = moduleExports;
+            for (const name of constants.HYPER_EXPRESS_METHODS) {
+              this._unwrap(Router.prototype, name as keyof Router);
+            }
+          }
+        }
+      )
+    ); 
+
+    module.files.push(
+      new InstrumentationNodeModuleFile(
         'hyper-express/src/components/Server.js',
         constants.SUPPORTED_VERSIONS,
         moduleExports => {
           this._isDisabled = false;
           const Server: any = moduleExports;
-          for (const name of constants.HYPER_EXPRESS_METHODS) {
-            if (isWrapped(Server.prototype[name])) {
-              this._unwrap(Server.prototype, name);
-            }
-            this._wrap(
-              Server.prototype,
-              name as keyof Server,
-              this._methodPatcher.bind(this)
-            );
-          }
+          // for (const name of constants.HYPER_EXPRESS_METHODS) {
+          //   if (isWrapped(Server.prototype[name])) {
+          //     this._unwrap(Server.prototype, name);
+          //   }
+          //   this._wrap(
+          //     Server.prototype,
+          //     name as keyof Server,
+          //     this._methodPatcher.bind(this)
+          //   );
+          // }
           for (const name of constants.HYPER_EXPRESS_MW_METHODS) {
             if (isWrapped(Server.prototype[name])) {
               this._unwrap(Server.prototype, name);
@@ -102,9 +132,9 @@ export class HyperExpressInstrumentation extends InstrumentationBase {
           this._isDisabled = true;
           if (moduleExports) {
             const Server: any = moduleExports;
-            for (const name of constants.HYPER_EXPRESS_METHODS) {
-              this._unwrap(Server.prototype, name as keyof Server);
-            }
+            // for (const name of constants.HYPER_EXPRESS_METHODS) {
+            //   this._unwrap(Server.prototype, name as keyof Server);
+            // }
             for (const name of constants.HYPER_EXPRESS_MW_METHODS) {
               this._unwrap(Server.prototype, name as keyof Server);
             }
@@ -297,7 +327,6 @@ export class HyperExpressInstrumentation extends InstrumentationBase {
         );
       };
     }
-
     return handler;
   }
 }
